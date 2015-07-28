@@ -22,7 +22,8 @@ public class HexGridController : MonoBehaviour
 		HexRenderer = Hex.GetComponent<Renderer>(); 
 		
 		SetSides();
-		CreateGrid();
+		//CreateGrid();
+		CreateTriangleGrid();
 	}
 
 	//Method to initialise Hexagon width and height
@@ -83,4 +84,24 @@ public class HexGridController : MonoBehaviour
 			}
 		}
 	}	
+
+	void CreateTriangleGrid()
+	{
+		//Game object which is the parent of all the hex tiles
+		GameObject hexGridGO = new GameObject("HexGrid");
+
+		for(float x = 0; x < gridHeightInHexes ; x++)
+		{
+			for(float y = 0; y < (gridWidthInHexes-x); y++)
+			{
+				//GameObject assigned to Hex public variable is cloned
+				GameObject hex = (GameObject)Instantiate(Hex);
+				//Current position in grid
+				Vector2 gridPos = new Vector2(x, y);
+				
+				hex.transform.position = CalcWorldCoord(gridPos); //Repensar posiçao, tringulo ficou estranho
+				hex.transform.parent = hexGridGO.transform;
+			}
+		}
+	}
 }
