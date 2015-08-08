@@ -9,12 +9,14 @@ public class HexTile : MonoBehaviour
 	public GameObject hex; //Hex Prefab
 
 	private Renderer rend;
+	private string distance = "";
 
 	//The grid should be generated on game start
 	void Start()
 	{
 		//Get the Renderer component from the Hex prefab
 		rend = hex.GetComponent<Renderer>();
+
 	}
 
 	void OnMouseEnter () 
@@ -26,5 +28,10 @@ public class HexTile : MonoBehaviour
 	void OnMouseExit () 
 	{
 		rend.material.color = Color.white;
+	}
+
+	void setDistance(string distance)
+	{
+		this.distance = distance;
 	}
 }
