@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 
 public class HexGridController : MonoBehaviour 
 {
@@ -13,7 +14,11 @@ public class HexGridController : MonoBehaviour
 	private float hexWidth;
 	private float hexHeight;
 
+	//Renderer object of the Hex prefab
 	private Renderer HexRenderer;
+
+	//Map Storage
+	List<List<HexTile>> map = new List<List<HexTile>>();
 	
 	//The grid should be generated on game start
 	void Start()
@@ -22,8 +27,19 @@ public class HexGridController : MonoBehaviour
 		HexRenderer = HexPrefab.GetComponent<Renderer>(); 
 		
 		SetSides();
-		CreateGrid();
+		CreateRetangleGrid();
 		//CreateTriangleGrid();
+
+		for(int i = 0; i < map.Count; i ++)
+		{
+			List<HexTile> row = map[i];
+			for(int j = 0; j < row.Count; j++)
+			{
+				HexTile tile = row[j];
+				string message = "i: " + i + "j: " + j + " gridPos: " + tile.gridPosition;
+				Debug.Log(message);
+			}
+		}
 	}
 
 	//Method to initialise Hexagon width and height
@@ -65,38 +81,29 @@ public class HexGridController : MonoBehaviour
 	}
 	
 	//Finally the method which initialises and positions all the tiles
-	void CreateGrid()
+	void CreateRetangleGrid()
 	{
 		//Game object which is the parent of all the hex tiles
 		GameObject hexGridGO = new GameObject("HexGrid");
-		GameObject positionText;
-		TextMesh text;
 		
 		for(float y = 0; y < gridHeightInHexes; y++)
 		{
+			List<HexTile> Row = new List<HexTile>();
 			for(float x = 0; x < gridWidthInHexes; x++)
 			{
 				//GameObject assigned to Hex public variable is cloned
-				GameObject hex = (GameObject)Instantiate(HexPrefab);
+				HexTile hex = ((GameObject)Instantiate(HexPrefab)).GetComponent<HexTile>();
 				//Current position in grid
 				Vector2 gridPos = new Vector2(x, y);
+				hex.gridPosition = gridPos;
 
-				positionText = hex.transform.Find("Position").gameObject;
-				
-				if(positionText != null)
-				{
-					text = positionText.GetComponent<TextMesh>();
-					text.text = "(" + gridPos.x + ", " + gridPos.y + ")";
-				}
-				else
-				{
-					Debug.LogError("Could not find object");
-				}
-
+				setTextCoordinates(hex, "(" + gridPos.x + ", " + gridPos.y + ")");
 
 				hex.transform.position = CalcWorldCoord(gridPos);
 				hex.transform.parent = hexGridGO.transform;
+				Row.Add(hex);
 			}
+			map.Add(Row);
 		}
 	}	
 
@@ -104,11 +111,11 @@ public class HexGridController : MonoBehaviour
 	{
 		//Game object which is the parent of all the hex tiles
 		GameObject hexGridGO = new GameObject("HexGrid");
-		GameObject positionText;
-		TextMesh text;
+
 
 		for(float x = 0; x < gridHeightInHexes ; x++)
 		{
+			List<HexTile> Row = new List<HexTile>();
 			for(float y = 0; y < (gridWidthInHexes-x); y++)
 			{
 				//GameObject assigned to Hex public variable is cloned
@@ -118,21 +125,13 @@ public class HexGridController : MonoBehaviour
 				Vector2 gridPos = new Vector2(x, y);
 				hex.gridPosition = new Vector3(x, y, 0);
 
-				positionText = hex.transform.Find("Position").gameObject;
-
-				if(positionText != null)
-				{
-					text = positionText.GetComponent<TextMesh>();
-					text.text = "(" + gridPos.x + ", " + gridPos.y + ")";
-				}
-				else
-				{
-					Debug.LogError("Could not find object");
-				}
+				setTextCoordinates(hex, "(" + gridPos.x + ", " + gridPos.y + ")");
 
 				hex.transform.position = CalcTriangleWordCoord(gridPos); //Repensar posiçao, tringulo ficou estranho
-				hex.transform.parent = hexGridGO.transform;
+				hex.transform.parent = hexGridGO.transform;	
+				Row.Add(hex);
 			}
+			map.Add(Row);
 		}
 	}
 
@@ -142,16 +141,31 @@ public class HexGridController : MonoBehaviour
 		Vector3 initPos = CalcInitPos();
 		//Every second row is offset by half of the tile width
 		float offset = 0f;
-		//if(gridPos.y % 2 != 0)
-		//{
-			offset = (hexWidth / 2) * gridPos.y;
-		//}
-		//Debug.Log(offset);
-		
+		offset = (hexWidth / 2) * gridPos.y;
+
 		float x = initPos.x + offset + gridPos.x * hexWidth;
 		//Every new line is offset in z direction by 3/4 of the hexagon height
 		float z = initPos.z - gridPos.y * hexHeight * 0.75f;
 		
 		return new Vector3(x, 0, z);
 	}	
+
+	//Writes the coordinates on the HexField (Used for testing)
+	void setTextCoordinates(HexTile hex, string strCoordinates)
+	{
+		GameObject positionText;
+		TextMesh text;
+
+		positionText = hex.transform.Find("Position").gameObject;
+		
+		if(positionText != null)
+		{
+			text = positionText.GetComponent<TextMesh>();
+			text.text = strCoordinates;
+		}
+		else
+		{
+			Debug.LogError("Could not find TextMesh object.");
+		}
+	}
 }
