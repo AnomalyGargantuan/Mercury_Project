@@ -4,11 +4,14 @@ using System.Collections.Generic;
 
 public class HexGridController : MonoBehaviour 
 {
+	public static HexGridController instance;
 	//Referencia ao Prefab contendo o Hex
 	public GameObject HexPrefab;
 	//Tamanho do Grid
 	public int gridWidthInHexes = 10;
 	public int gridHeightInHexes = 10;
+
+	public LineRenderer line;
 	
 	//Hexagon tile width and height in game world
 	private float hexWidth;
@@ -23,12 +26,33 @@ public class HexGridController : MonoBehaviour
 	//The grid should be generated on game start
 	void Start()
 	{
+		instance = this;
 		//Get the Renderer component from the Hex prefab
 		HexRenderer = HexPrefab.GetComponent<Renderer>(); 
-		
-		SetSides();
+
+		SetSizes();
 		CreateRetangleGrid();
 		//CreateTriangleGrid();
+		//CreateHexagonalGrid();
+
+
+
+		GameObject lineRenderer;
+
+		
+		lineRenderer = this.transform.Find("LineRenderer").gameObject;
+		
+		if(lineRenderer != null)
+		{
+			line = lineRenderer.GetComponent<LineRenderer>();
+			line.SetPosition(0, map[0][0].transform.position);
+			line.SetWidth(0.3f, 0.3f);
+		}
+		else
+		{
+			Debug.LogError("Could not find TextMesh object.");
+		}
+
 
 		for(int i = 0; i < map.Count; i ++)
 		{
@@ -43,7 +67,7 @@ public class HexGridController : MonoBehaviour
 	}
 
 	//Method to initialise Hexagon width and height
-	void SetSides()
+	void SetSizes()
 	{
 		//renderer component attached to the Hex prefab is used to get the current width and height
 		hexWidth = HexRenderer.bounds.size.x;
@@ -127,7 +151,7 @@ public class HexGridController : MonoBehaviour
 
 				setTextCoordinates(hex, "(" + gridPos.x + ", " + gridPos.y + ")");
 
-				hex.transform.position = CalcTriangleWordCoord(gridPos); //Repensar posiçao, tringulo ficou estranho
+				hex.transform.position = CalcTriangleWordCoord(gridPos);
 				hex.transform.parent = hexGridGO.transform;	
 				Row.Add(hex);
 			}
@@ -167,5 +191,44 @@ public class HexGridController : MonoBehaviour
 		{
 			Debug.LogError("Could not find TextMesh object.");
 		}
+	}
+
+	void CreateHexagonalGrid()
+	{
+		//Game object which is the parent of all the hex tiles
+		GameObject hexGridGO = new GameObject("HexGrid");
+		int mapRadius = 3;
+
+		for(int i = -mapRadius; i <= mapRadius; i++)
+		{
+			int r1 = Mathf.Max(-mapRadius, -i - mapRadius);
+			int r2 = Mathf.Min(mapRadius, -i + mapRadius);
+			for(int r = r1; r <= r2; r++)
+			{
+				HexTile hex = ((GameObject) Instantiate(HexPrefab)).GetComponent<HexTile>();
+				Vector2 gridPos = new Vector2(i, r);
+				hex.gridPosition = new Vector3(i, r, 0);
+
+				setTextCoordinates(hex, "(" + gridPos.x + ", " + gridPos.y + ")");
+
+				hex.transform.position = CalcHexWordCoord(gridPos);
+				hex.transform.parent = hexGridGO.transform;	
+			}
+		}
+	}
+
+	public Vector3 CalcHexWordCoord(Vector2 gridPos)
+	{
+		//Position of the first hex tile
+		Vector3 initPos = new Vector3();
+		//Every second row is offset by half of the tile width
+		float offset = 0f;
+		offset = (hexWidth / 2) * gridPos.y;
+		
+		float x = initPos.x + offset + gridPos.x * hexWidth;
+		//Every new line is offset in z direction by 3/4 of the hexagon height
+		float z = initPos.z - gridPos.y * hexHeight * 0.75f;
+		
+		return new Vector3(x, 0, z);
 	}
 }
